@@ -6,7 +6,8 @@ int Octava6Freqs[] = {note0, note1, note2, note3, note4, note5, note6, note7, no
 int j=0;
 unsigned int KBIFG = 0;
 char LED_STATE = 0x1;
-
+char new_x[5];
+int x_pending = 0;
 /*__________________________________________________________
  *                                                          *
  *             System Configuration                       *
@@ -16,6 +17,9 @@ void sysConfig(void){
 	StopAllTimers();
 	lcd_init();
 	lcd_clear();
+
+    DCO_config();
+    UART_init();
 }
 //____________________________________________________________
 
@@ -396,3 +400,101 @@ __interrupt void ADC10_ISR (void)
 {
     __bic_SR_register_on_exit(CPUOFF);
 }
+
+
+/** _______________________________________________________________________________________________*
+ *                                                                                                 *
+ *                                      TX ISR                                                     *
+ *                                                                                                 *
+ *  -----------------------------------------------------------------------------------------------*
+ * handles the UART serial  communication module (USCI) Transmission interrupt                     *
+ *                                                                                                 *
+ *_________________________________________________________________________________________________*/
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=USCIAB0TX_VECTOR
+__interrupt void USCI0TX_ISR(void)
+#elif defined(__GNUC__)8565
+void __attribute__ ((interrupt(USCIAB0TX_VECTOR))) USCI0TX_ISR (void)
+#else
+#error Compiler not supported!
+#endif
+{
+    if(x_pending) UCA0TXBUF = 'x';
+    else{
+        UCA0TXBUF = '0';
+    }
+    IE2 &= ~UCA0TXIE;                       // Disable USCI_A0 TX interrupt
+
+}
+
+/** _______________________________________________________________________________________________*
+ *                                                                                                 *
+ *                                      RX ISR                                                     *
+ *                                                                                                 *
+ *  -----------------------------------------------------------------------------------------------*
+ * handles the UART serial  communication module (USCI) Receiving  interrupt                       *
+ *                                                                                                 *
+ *_________________________________________________________________________________________________*/
+
+#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
+#pragma vector=USCIAB0RX_VECTOR
+__interrupt void USCI0RX_ISR(void)
+#elif defined(__GNUC__)
+void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR (void)
+#else
+#error Compiler not supported!
+#endif
+{
+    if (x_pending){
+
+        new_x[j++] = UCA0RXBUF;
+        if (new_x[j] == '\n'){
+            j = 0;
+            x_pending = 0;
+            state = state4;
+            //IE2 |= UCA0TXIE;        // Enable USCI_A0 TX interrupt
+        }
+    }
+    else if (UCA0RXBUF == '1')                     // '1' received?
+        {state = state1; UCA0TXBUF = '1';}      // Set state1
+
+    else if (UCA0RXBUF == '2')                // '2' received?
+        {state = state2; UCA0TXBUF = '2';}      // Set state2
+
+    else if (UCA0RXBUF == '3')                // '3' received?
+        { state = state3; UCA0TXBUF = '3';}   // Set state3
+
+    else if(UCA0RXBUF == '4')                // '4' received?
+        {state = state0; x_pending = 1; IE2 |= UCA0TXIE;}      // Set state4
+
+    else if (UCA0RXBUF == '5')                // '5' received?
+        {state = state5; UCA0TXBUF = '5';}    // Set state5
+
+    else if (UCA0RXBUF == '6')                // '6' received?
+        {state = state6; UCA0TXBUF = '6';}
+                                             // Set state6
+    else if (UCA0RXBUF == '7')                // '7' received?
+        {state = state7; UCA0TXBUF = 'm';}                         // Set state7
+
+    else if (UCA0RXBUF == '8')                // '8' received?
+        {state = state0; UCA0TXBUF = '0';}                         // Set state0
+
+    switch(lpm_mode){
+        case mode0:
+            LPM0_EXIT; // must be called from ISR only
+            break;
+        case mode1:
+            LPM1_EXIT; // must be called from ISR only
+            break;
+        case mode2:
+            LPM2_EXIT; // must be called from ISR only
+            break;
+        case mode3:
+            LPM3_EXIT; // must be called from ISR only
+            break;
+        case mode4:
+            LPM4_EXIT; // must be called from ISR only
+            break;
+    }
+}
+

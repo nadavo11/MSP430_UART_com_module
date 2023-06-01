@@ -20,7 +20,6 @@
 #define     note12  250
 
 
-extern void uart_start();
 extern void lcd_reset();
 extern void LED_Blink(int delay);
 extern void LCD_count(int delay);

@@ -40,6 +40,11 @@
 #define BuzzPin                 BIT4
 
 
+//uart abstraction
+#define TXLED                   BIT0
+#define RXLED                   BIT6
+#define TXD                     BIT2
+#define RXD                     BIT1
 
 //  Keypad abstraction
 #define KeypadPortSel         P10SEL
@@ -98,6 +103,9 @@ extern void DMA_config3();
 
 extern void ADC_config();
 extern void ADC_start();
+
+extern void UART_init();
+extern void DCO_config();
 
 #endif
 

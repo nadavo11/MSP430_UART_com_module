@@ -140,3 +140,56 @@ void ADC_config(){
 void ADC_start(){
     ADC10CTL0 |= ENC + ADC10SC;                             // Sampling and conversion start
 }
+
+
+
+
+/** _______________________________________________________________________________________________*
+ *                                                                                                 *
+ *                                DCO config                                                       *
+ *                                                                                                 *
+ *  -----------------------------------------------------------------------------------------------*
+ * sets the clock frequency of the microcontroller to                                              *
+ * 1 MHz using the DCO (Digitally Controlled Oscillator).                                          *
+ *                                                                                                 *
+ *_________________________________________________________________________________________________*/
+
+void DCO_config() {
+
+    if (CALBC1_1MHZ==0xFF)                  // If calibration constant erased
+        while(1);                               // do not load, trap CPU!!
+
+
+    DCOCTL = 0;                               // Select lowest DCOx and MODx settings
+
+    BCSCTL1 = CALBC1_1MHZ;                    // Set DCO Frequency Range
+    DCOCTL = CALDCO_1MHZ;                      // Set DCO specific frequency within the range
+
+
+
+    P2DIR = 0xFF;                             // All uuu.x outputs
+    P2OUT = 0;                                // All P2.x reset
+    P1SEL = BIT1 + BIT2;                     // P1.1 = RXD, P1.2=TXD
+    P1SEL2 = BIT1 + BIT2;                     // P1.1 = RXD, P1.2=TXD
+    P1DIR |= RXLED + TXLED;
+    P1OUT &= 0x00;
+}
+/** _______________________________________________________________________________________________*
+ *                                                                                                 *
+ *                                      UART init                                                  *
+ *                                                                                                 *
+ *  -----------------------------------------------------------------------------------------------*
+ * initializes the UART communication module (USCI) for serial communication.                      *
+ *  - UART CLK  - SMCLK                                                                            *
+ *_________________________________________________________________________________________________*/
+void UART_init() {
+    UCA0CTL1 |= UCSSEL_2;                     // UART CLK <- SMCLK
+
+    // configure the transmission rate to 9600 baud
+    UCA0BR0 = 104;                           // UART Baud Rate Control registers
+    UCA0BR1 = 0x00;                           // 1MHz 9600
+    UCA0MCTL = UCBRS0;                        // Modulation UCBRSx = 1
+    UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
+    IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
+   // __bis_SR_register(LPM0_bits + GIE);       // Enter LPM3 w/ int until Byte RXed
+}

@@ -114,7 +114,9 @@ extern void lcd_strobe();
 extern void DelayMs(unsigned int);
 extern void DelayUs(unsigned int);
 
- 
+
+extern char new_x[5];
+
 
 /*__________________________________________________________
  *                                                          *
