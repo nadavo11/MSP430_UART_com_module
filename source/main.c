@@ -6,7 +6,7 @@ enum FSMstate state;
 unsigned int KB;
 enum SYSmode lpm_mode;
 unsigned int i = 0;
-int x = 500;
+
 float tones[7] = {1,1.25,1.5,1.75,2,2.25,2.5};
 
 void main(void){

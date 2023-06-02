@@ -21,12 +21,11 @@ void lcd_reset(){
  *                                                          *
  *          STATE 1 : LED blink                             *
  *__________________________________________________________*/
-void LED_Blink(int delay){
+void LED_Blink(int t){
     while (state == state1){
         enable_interrupts();
         LED_RGB_Port ^= LED_R;
-        startTimerA0(delay);
-        __bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
+        delay(t);
 
     }
     //stopTimerA0();
@@ -36,7 +35,7 @@ void LED_Blink(int delay){
  *                                                          *
  *          STATE 2 : DMA Row Swap                          *
  *__________________________________________________________*/
-void LCD_count(int delay){
+void LCD_count(int t){
     while (state == state2){
         lcd_reset();
         lcd_print_num(count);
@@ -44,8 +43,7 @@ void LCD_count(int delay){
         if (count == 100){
             count = 0;
         }
-        startTimerA0(delay);
-        __bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
+        delay(t);
 
     }
     //stopTimerA0();
@@ -104,7 +102,7 @@ void sing_buzz(float tones[],int delay){
  *          STATE 4 : LDR measurement display               *
  *__________________________________________________________*/
 
-void LDR_measurement(int delay){
+void LDR_measurement(int t){
     while (state == state4){
 
 
@@ -124,8 +122,7 @@ void LDR_measurement(int delay){
         lcd_print_voltage(ADC10MEM * 3.4);       // Display results
 
         //Sleep for x msec
-        startTimerA0(delay);
-        __bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
+        delay(t);
     }
     //stopTimerA0();
 }

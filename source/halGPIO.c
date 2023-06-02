@@ -8,6 +8,9 @@ unsigned int KBIFG = 0;
 char LED_STATE = 0x1;
 char new_x[5];
 int x_pending = 0;
+unsigned int x = 500;
+
+
 /*__________________________________________________________
  *                                                          *
  *             System Configuration                       *
@@ -48,7 +51,7 @@ void int2str(char *str, unsigned int num){
 }
 /*__________________________________________________________
  *                                                          *
- *            Enter from LPM0 mode                      *
+ *            Enter LPM mode                                *
  *__________________________________________________________*/
 
 void enterLPM(unsigned char LPM_level){
@@ -281,16 +284,6 @@ void DelayMs(unsigned int cnt){
 
 }
 
-/*__________________________________________________________
- *                                                          *
- *           Polling based Delay function                       *
- *__________________________________________________________*/  
-void delay(unsigned int t){  //
-    volatile unsigned int i;
-
-    for(i=t; i>0; i--);
-}
-
 
 
 /********************************************************************************
@@ -392,7 +385,31 @@ void __attribute__ ((interrupt(TIMER1_A1_VECTOR))) Timer_A1 (void)
 }
 /*__________________________________________________________
  *                                                          *
- *            Exit from a given LPM                       *
+ *            delay for multiple TA calls                   *
+ *__________________________________________________________*/
+
+void delay(unsigned int t){
+    unsigned int num_of_halfSec;
+
+    num_of_halfSec = (int) t / 500;
+    unsigned int res;
+    res = t % 500;
+    res = res * 131;
+
+    for (i=0; i < num_of_halfSec; i++){
+        startTimerA0(0xFFFF);
+        __bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ int until Byte RXed
+    }
+
+    if (res > 1000){
+        startTimerA0(res);
+        __bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ int until Byte RXed
+    }
+}
+
+/*__________________________________________________________
+ *                                                          *
+ *            Exit from a given LPM                         *
  *__________________________________________________________*/
 
 #pragma vector = ADC10_VECTOR
@@ -448,36 +465,40 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR (void)
     if (x_pending){
 
         new_x[j++] = UCA0RXBUF;
-        if (new_x[j] == '\n'){
+        if (new_x[j-1] == '\n'|| UCA0RXBUF == '\n'){
             j = 0;
             x_pending = 0;
             state = state4;
-            //IE2 |= UCA0TXIE;        // Enable USCI_A0 TX interrupt
+            IE2 |= UCA0TXIE;        // Enable USCI_A0 TX interrupt
         }
     }
-    else if (UCA0RXBUF == '1')                     // '1' received?
+
+    else{
+        if      (UCA0RXBUF == '1')                     // '1' received?
         {state = state1; UCA0TXBUF = '1';}      // Set state1
 
-    else if (UCA0RXBUF == '2')                // '2' received?
+        else if (UCA0RXBUF == '2')                // '2' received?
         {state = state2; UCA0TXBUF = '2';}      // Set state2
 
-    else if (UCA0RXBUF == '3')                // '3' received?
+        else if (UCA0RXBUF == '3')                // '3' received?
         { state = state3; UCA0TXBUF = '3';}   // Set state3
 
-    else if(UCA0RXBUF == '4')                // '4' received?
+        else if(UCA0RXBUF == '4')                // '4' received?
         {state = state0; x_pending = 1; IE2 |= UCA0TXIE;}      // Set state4
 
-    else if (UCA0RXBUF == '5')                // '5' received?
+        else if (UCA0RXBUF == '5')                // '5' received?
         {state = state5; UCA0TXBUF = '5';}    // Set state5
 
-    else if (UCA0RXBUF == '6')                // '6' received?
+        else if (UCA0RXBUF == '6')                // '6' received?
         {state = state6; UCA0TXBUF = '6';}
-                                             // Set state6
-    else if (UCA0RXBUF == '7')                // '7' received?
+            // Set state6
+        else if (UCA0RXBUF == '7')                // '7' received?
         {state = state7; UCA0TXBUF = 'm';}                         // Set state7
 
-    else if (UCA0RXBUF == '8')                // '8' received?
+        else if (UCA0RXBUF == '8')                // '8' received?
         {state = state0; UCA0TXBUF = '0';}                         // Set state0
+    }
+
 
     switch(lpm_mode){
         case mode0:

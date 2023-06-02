@@ -76,8 +76,8 @@ void TIMER0_A0_config(void){
 void startTimerA0(int x){
     // count to x*8
 
-    int t = x*0x82;
-    TACCR0 = t;  // Timer Cycles - max
+
+    TACCR0 = x;  // Timer Cycles - max
     TA0CTL = TASSEL_2 + MC_1 + ID_3;  //  select: 2 - SMCLK ;
     TA0CCTL0 = CCIE;
 

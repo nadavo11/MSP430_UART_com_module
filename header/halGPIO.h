@@ -33,7 +33,7 @@ extern unsigned int KBIFG;
 extern void sysConfig(void);
 extern void SetByteToPort(char);
 extern void clrPortByte(char);
-extern void delay(unsigned int);
+
 extern void enterLPM(unsigned char);
 extern void enable_interrupts();
 extern void disable_interrupts();
@@ -113,8 +113,8 @@ extern void lcd_print_voltage(int num);
 extern void lcd_strobe();
 extern void DelayMs(unsigned int);
 extern void DelayUs(unsigned int);
-
-
+extern void delay(unsigned int t);
+extern unsigned int x;
 extern char new_x[5];
 
 
