@@ -4,8 +4,10 @@
 ////UPDATE14;55
 #include "stdio.h"
 
+int tones[7] = {1000,1250,1500,17500,2000,2250,2500};
 int count = 0;
 int tone = 0;
+int c;
 /*______________________________________
  *                                      *
  *          LCD API                     *
@@ -17,14 +19,18 @@ void lcd_reset(){
     lcd_home();
 }
 
+int colors[12] = {0,1,0,3,0,2,0,6,0,4,0,5};
 /*__________________________________________________________
  *                                                          *
  *          STATE 1 : LED blink                             *
  *__________________________________________________________*/
 void LED_Blink(int t){
+    c = 0;
     while (state == state1){
         enable_interrupts();
-        LED_RGB_Port ^= LED_R;
+        LED_RGB_Port = colors[c];
+        c = (c+1)%9;
+
         delay(t);
 
     }
@@ -52,58 +58,27 @@ void LCD_count(int t){
 
 /*__________________________________________________________
  *                                                          *
- *          STATE 3 : DMA Led Shift                          *
+ *          STATE 3 : Buzzer tone gen                        *
  *__________________________________________________________*/
-void audio_player(){
-    disable_interrupts();
-    StopAllTimers(); // Stop All Timers(A,B,DMA)
 
-    //Init Timer A and Timer B
-    TIMER_A0_config(); // For delay
-    TIMERB_config();  // For PWM
+void sing_buzz(int t){
 
-    //Choose Selected Song according to the keypad number that was pressed
-
-    //lcd_reset(); DMA0SA = (void(*)()) &tones; DMA0SZ = Song1Size; DMA_config(); lcd_puts("Playing tones"); break;
-
-    enable_interrupts();
-}
-
-
-
-void Buzz_pwm(int freq){
-    while (tone == freq){
-
-        BuzzPortOut ^= BuzzPin;
-        int t = (int)(0x1820/freq);
-        enable_interrupts();
-        //startTimerA0(delay);
-        startTimerA1(t);
-
-    }
-    //stopTimerA0();
-}
-
-void sing_buzz(float tones[],int delay){
+    unsigned int i = 0;
     while (state == state3){
-        startTimerA0(delay);
-        Buzz_pwm(tones[tone]);
-        enable_interrupts();
-        tone++;
-        if (i == 7){
-            i = 0;
-        }
-    }
+        startTimerA1(tones[i]);
 
+        i = (i+1 )%7;
+        delay(t);
+    }
+    TA1CTL = MC_0; //stop timer
 }
-    //stopTimerA0();
 /*__________________________________________________________
  *                                                          *
- *          STATE 4 : LDR measurement display               *
+ *          STATE 5 : LDR measurement display               *
  *__________________________________________________________*/
 
 void LDR_measurement(int t){
-    while (state == state4){
+    while (state == state5){
 
 
         //make ADC conversion

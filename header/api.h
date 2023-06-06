@@ -24,7 +24,7 @@ extern void lcd_reset();
 extern void LED_Blink(int delay);
 extern void LCD_count(int delay);
 extern void Buzz_pwm(int freq);
-extern void sing_buzz(float tones[],int delay);
+extern void sing_buzz(int delay);
 void LDR_measurement(int delay);
 void print_mat();
 #endif

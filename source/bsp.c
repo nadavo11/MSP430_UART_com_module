@@ -16,7 +16,7 @@ void GPIOconfig(void){
     LCD_CTL_SEL  &= ~0xE0;   // Bit clear P2.5-P2.7
 
     // Buzzer Setup               // P2.4
-    BuzzPortDir |= BIT4;             // P2.4 Output compare - '1'
+    BuzzPortDir &= ~BIT4;             // P2.4 Output compare - '1'
     BuzzPortSel |= BIT4;             // P2.4 Select = '1'
     BuzzPortOut &= ~BIT4;             // P2.4 out = '0'
 
@@ -108,17 +108,14 @@ void StopAllTimers(void){
  *______________________________________*/
 // Configure Timer A1
 void startTimerA1(int t) {
-    TA1CTL |= TAIE;  // Enable Timer A1 interrupt
-
     TA1CCR0 = t;                   // Timer Cycles - frequency
-
+    TA1CCR1 = (int)t/2;                 // Timer Cycles - duty cycle
     //control: 3 - Up/Down  ;
     //divider: 0 - /1
-    TA1CTL = TASSEL_2 + MC_1 + ID_0;  //  select: 2 - SMCLK ;
-    TA1CCTL1 = CCIE;
+    TA1CTL = TASSEL_2 + MC_1;  //  select: 2 - SMCLK ;
+    TA1CCTL2 = OUTMOD_7;           // TACCR2 toggle
 
     // no ACLCK, we use SMCLK.
-    __bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
 }
 //-------------------------------------------------------------------------------------
 //            Timer A1 PWM configuration

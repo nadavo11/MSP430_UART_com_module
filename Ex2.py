@@ -1,8 +1,12 @@
 import serial as ser
 from time import sleep
-pingPongNum = 10
+from GUI import *
 
-#in this example we sends a character and ping pong the input character "pingPongNum" times before the port closes
+
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QSlider, QLabel, QVBoxLayout
+from PyQt5.QtCore import Qt
+from time import sleep
 
 MENU ='''
   __  __  ______  _   _  _    _ 
@@ -27,13 +31,13 @@ def printMenu():
     print(MENU)
 
 
-def processChar(char):
-    if char == 'm':
-        printMenu()
-    if char == 'x':
-        print("please enter delay time in ms")
-    else:
-        print(f'char: {char} received')
+# def processChar(char):
+#     if char == 'm':
+#         printMenu()
+#     if char == 'x':
+#         print("please enter delay time in ms")
+#     else:
+#         print(f'char: {char} received')
 
 """
 _____________________________________________________________________________________
@@ -45,9 +49,8 @@ ________________________________________________________________________________
                          
 
 """
-
 def main():
-    s = ser.Serial('COM15', baudrate=9600, bytesize=ser.EIGHTBITS,
+    s = ser.Serial('COM14', baudrate=9600, bytesize=ser.EIGHTBITS,
                    parity=ser.PARITY_NONE, stopbits=ser.STOPBITS_ONE,
                    timeout=1)   # timeout of 1 sec where the read and write operations are blocking,
                                 # after the timeout the program continues
@@ -55,41 +58,21 @@ def main():
     # clear buffers
     s.reset_input_buffer()
     s.reset_output_buffer()
-    count = 1
-    char = ''
+    app = QApplication(sys.argv)
 
+    g = GUI(s)
+    g.show()
+
+    sys.exit(app.exec_())
     printMenu()
+
     while(True):
 
-        inChar = input("Enter char:")
-
-        for c in inChar:
-            bytesChar = bytes(c, 'ascii')
-            print("bytes:",bytesChar)
-            s.write(bytesChar)
-            sleep(0.5)
-        s.write(bytes('\n', 'ascii'))
-        sleep(0.2)
-
+        # Read from the input buffer
         while (s.in_waiting > 0):  # while the input buffer isn't empty
-            char = s.read(size=1).decode("ascii")  # read 1 char from the input buffer
-            processChar(char)
-
-    while(1):
-        while (s.in_waiting > 0):  # while the input buffer isn't empty
-            char = s.read(size = 1).decode("ascii")  # read 1 char from the input buffer
-            print(char)
-
-            if (s.in_waiting == 0):
-                enableTX = True  # enable transmission to echo the received data
-        while (s.out_waiting > 0 or enableTX):
-            s.write(char)
-            count = count + 1
-            if (s.out_waiting == 0):
-                enableTX = False
-        if count == pingPongNum + 1:
-            s.close()
-            break
+            line = s.read_until(expected='\n')  # read  from the buffer until the terminator is received,
+            # readline() can also be used if the terminator is '\n'
+            print(line.decode("ascii"))
 
 
 if __name__ == '__main__':

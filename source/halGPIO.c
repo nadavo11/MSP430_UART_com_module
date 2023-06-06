@@ -436,11 +436,11 @@ void __attribute__ ((interrupt(USCIAB0TX_VECTOR))) USCI0TX_ISR (void)
 #error Compiler not supported!
 #endif
 {
-    if(x_pending) UCA0TXBUF = 'x';
-    else{
-        UCA0TXBUF = '0';
-    }
+    if(state == state7) UCA0TXBUF = '7'; //print menu in PC
+    else if (x_pending) UCA0TXBUF = '4';
+    else UCA0TXBUF = 'F';   // Finish
     IE2 &= ~UCA0TXIE;                       // Disable USCI_A0 TX interrupt
+
 
 }
 
@@ -483,8 +483,13 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR (void)
         else if (UCA0RXBUF == '3')                // '3' received?
         { state = state3; UCA0TXBUF = '3';}   // Set state3
 
-        else if(UCA0RXBUF == '4')                // '4' received?
-        {state = state0; x_pending = 1; IE2 |= UCA0TXIE;}      // Set state4
+        else if(UCA0RXBUF == '4'){
+
+            // '4' received?
+            x_pending = 1;
+            IE2 |= UCA0TXIE;
+        }
+//        {state = state0; x_pending = 1; IE2 |= UCA0TXIE;}      // Set state4
 
         else if (UCA0RXBUF == '5')                // '5' received?
         {state = state5; UCA0TXBUF = '5';}    // Set state5
